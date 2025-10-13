@@ -1,9 +1,0 @@
-{
-  "name": "mydental-site",
-  "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "aws-sdk": "^2.1360.0",
-    "@sendgrid/mail": "^7.7.0"
-  }
-}
