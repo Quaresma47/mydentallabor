@@ -78,8 +78,8 @@
   const urlParams = new URLSearchParams(window.location.search);
   const fileName = urlParams.get('file');
   if (fileName) {
-    const fullUrl = `https://your-s3-bucket.s3.amazonaws.com/uploads/${fileName}`;
-    loadUrl(fullUrl);
+    const fullUrl = `https://mydentallabor-files.s3.eu-central-1.amazonaws.com/uploads/${fileName}`;
+
     return;
   }
 

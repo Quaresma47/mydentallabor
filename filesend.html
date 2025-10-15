@@ -203,8 +203,12 @@ form.addEventListener("submit", async (e) => {
       });
       const { uploadURL, key } = await res.json();
 
-      // 2️⃣ Dosyayı S3'e yükle
-      await fetch(uploadURL, { method: "PUT", body: file });
+      // Presigned URL ile dosyayı S3'e yükle
+await fetch(uploadURL, { method: "PUT", body: file });
+
+// ✅ Yükleme tamamlandıktan sonra önizleme sayfasına git
+const fileName = encodeURIComponent(file.name);
+window.location.href = `preview.html?file=${fileName}`;
 
       // 3️⃣ Bilgileri submit-form Lambda'ya gönder
       await fetch(`${API_BASE}/submit-form`, {
