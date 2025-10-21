@@ -76,12 +76,12 @@
 
   // 2️⃣ Eğer yoksa URL parametresinden dosya adını al
   const urlParams = new URLSearchParams(window.location.search);
-  const fileName = urlParams.get('file');
-  if (fileName) {
-    const fullUrl = `https://mydentallabor-files.s3.eu-central-1.amazonaws.com/uploads/${fileName}`;
-
-    return;
-  }
+const fileName = urlParams.get('file');
+if (fileName) {
+  const fullUrl = `https://mydentallabor-files.s3.eu-central-1.amazonaws.com/uploads/${fileName}`;
+  loadUrl(fullUrl); // ✅ Artık STL dosyası gerçekten yükleniyor
+  return;
+}
 
   // 3️⃣ Hiçbiri yoksa kullanıcıya bilgi ver
   const el = document.createElement('div');
