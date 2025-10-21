@@ -235,4 +235,26 @@ window.location.href = `preview.html?file=${fileName}`;
   }
 });
 </script>
+<!-- 🧩 Önizleme butonunun local preview kodu -->
+<script>
+document.getElementById("previewBtn").addEventListener("click", function() {
+  const fileInput = document.getElementById("fileInput");
+  if (!fileInput.files.length) {
+    alert("Lütfen bir dosya seçin.");
+    return;
+  }
+
+  const file = fileInput.files[0]; // sadece ilk seçilen dosya önizlenir
+  const fileUrl = URL.createObjectURL(file);
+
+  // Local URL’i tarayıcı belleğine kaydet
+  sessionStorage.setItem("stlObjectUrl", fileUrl);
+
+  // preview sayfasını yeni sekmede aç
+  window.open("preview.html", "_blank");
+});
+</script>
+
 <script src="test-s3.js"></script>
+</body>
+</html>
