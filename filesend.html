@@ -156,23 +156,66 @@ document.getElementById('previewBtn').addEventListener('click', () => {
   }
 });
 </script>
+<!-- 🧩 Alt alta dosya listesi + önizleme + yükleme sistemi -->
 <script>
 const API_BASE = "https://xch7lt656j.execute-api.eu-central-1.amazonaws.com/default";
 const form = document.getElementById("dosyaForm");
-const fileInput = document.getElementById("file");
+const fileInput = document.getElementById("fileInput");
 const fileList = document.getElementById("fileList");
 const submitBtn = form.querySelector('button[type="submit"]');
+const previewBtn = document.getElementById("previewBtn");
 
-// 📂 Seçilen dosyaları listele
+// 📂 Seçilen dosyaları alt alta listele
 fileInput.addEventListener("change", () => {
   fileList.innerHTML = "";
-  Array.from(fileInput.files).forEach((file) => {
+  if (!fileInput.files.length) {
+    fileList.innerHTML = "<li class='list-group-item text-muted'>Henüz dosya seçilmedi.</li>";
+    return;
+  }
+
+  Array.from(fileInput.files).forEach((file, index) => {
     const li = document.createElement("li");
-    li.className = "list-group-item";
-    li.textContent = file.name;
+    li.className = "list-group-item d-flex justify-content-between align-items-center";
+    li.innerHTML = `
+      <span>${index + 1}. ${file.name}</span>
+      <button type="button" class="btn btn-sm btn-outline-primary preview-single" data-index="${index}">
+        <i class="fa fa-eye"></i>
+      </button>
+    `;
     fileList.appendChild(li);
   });
+
+  // Her bir dosya için tekil önizleme butonu
+  document.querySelectorAll(".preview-single").forEach(btn => {
+    btn.addEventListener("click", e => {
+      const i = e.currentTarget.dataset.index;
+      const file = fileInput.files[i];
+      const url = URL.createObjectURL(file);
+      sessionStorage.setItem("stlObjectUrl", url);
+      window.open("preview.html", "_blank");
+    });
+  });
 });
+
+// 🔧 Basit durum etiketi
+function showStatus(message, color = "#0f0") {
+  let el = document.getElementById("uploadStatus");
+  if (!el) {
+    el = document.createElement("div");
+    el.id = "uploadStatus";
+    el.style.position = "fixed";
+    el.style.bottom = "20px";
+    el.style.right = "20px";
+    el.style.background = "#111";
+    el.style.color = color;
+    el.style.padding = "10px 16px";
+    el.style.borderRadius = "8px";
+    el.style.zIndex = "9999";
+    document.body.appendChild(el);
+  }
+  el.style.color = color;
+  el.textContent = message;
+}
 
 // 📤 Form gönderimi
 form.addEventListener("submit", async (e) => {
@@ -194,67 +237,60 @@ form.addEventListener("submit", async (e) => {
   }
 
   try {
+    showStatus("📤 Yükleniyor...", "#ffd700");
+
     for (const file of files) {
-      // 1️⃣ Lambda'dan presigned URL al
+      // 🔹 Presigned URL al — email bazlı klasörleme aktif
       const res = await fetch(`${API_BASE}/get-presigned`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: file.name, type: file.type }),
+        body: JSON.stringify({ 
+          name: `uploads/${email}/${file.name}`,
+          type: file.type 
+        }),
       });
       const { uploadURL, key } = await res.json();
 
-      // Presigned URL ile dosyayı S3'e yükle
-await fetch(uploadURL, { method: "PUT", body: file });
+      // 🔹 Dosyayı yükle
+      await fetch(uploadURL, { method: "PUT", body: file });
 
-// ✅ Yükleme tamamlandıktan sonra önizleme sayfasına git
-const fileName = encodeURIComponent(file.name);
-window.location.href = `preview.html?file=${fileName}`;
-
-      // 3️⃣ Bilgileri submit-form Lambda'ya gönder
+      // 🔹 Form kaydını Lambda'ya gönder
       await fetch(`${API_BASE}/submit-form`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          email,
-          description,
-          fileKey: key,
-        }),
+        body: JSON.stringify({ name, email, description, fileKey: key }),
       });
     }
 
+    showStatus("✅ Dosyalar başarıyla yüklendi!", "#00ff00");
     alert("Dosyalar başarıyla yüklendi 🎉");
     form.reset();
     fileList.innerHTML = "";
+
   } catch (err) {
     console.error("Yükleme hatası:", err);
+    showStatus("❌ Yükleme hatası!", "red");
     alert("Bir hata oluştu, lütfen tekrar deneyin.");
   } finally {
     submitBtn.disabled = false;
     submitBtn.textContent = originalText;
+    setTimeout(() => document.getElementById("uploadStatus")?.remove(), 3000);
   }
 });
-</script>
-<!-- 🧩 Önizleme butonunun local preview kodu -->
-<script>
-document.getElementById("previewBtn").addEventListener("click", function() {
-  const fileInput = document.getElementById("fileInput");
-  if (!fileInput.files.length) {
-    alert("Lütfen bir dosya seçin.");
+
+// 🧩 Tüm dosyaları sırayla önizleme
+previewBtn.addEventListener("click", () => {
+  const files = fileInput.files;
+  if (!files.length) {
+    alert("Lütfen bir veya daha fazla dosya seçin.");
     return;
   }
 
-  const file = fileInput.files[0]; // sadece ilk seçilen dosya önizlenir
-  const fileUrl = URL.createObjectURL(file);
-
-  // Local URL’i tarayıcı belleğine kaydet
-  sessionStorage.setItem("stlObjectUrl", fileUrl);
-
-  // preview sayfasını yeni sekmede aç
-  window.open("preview.html", "_blank");
+  Array.from(files).forEach((file) => {
+    const url = URL.createObjectURL(file);
+    sessionStorage.setItem("stlObjectUrl", url);
+    window.open("preview.html", "_blank");
+  });
 });
 </script>
 
-<script src="test-s3.js"></script>
-</body>
-</html>
