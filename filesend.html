@@ -165,7 +165,7 @@ const fileList = document.getElementById("fileList");
 const submitBtn = form.querySelector('button[type="submit"]');
 const previewBtn = document.getElementById("previewBtn");
 
-// 📂 Seçilen dosyaları alt alta listele
+// 📂 Seçilen dosyaları listele
 fileInput.addEventListener("change", () => {
   fileList.innerHTML = "";
   if (!fileInput.files.length) {
@@ -185,7 +185,6 @@ fileInput.addEventListener("change", () => {
     fileList.appendChild(li);
   });
 
-  // Her bir dosya için tekil önizleme butonu
   document.querySelectorAll(".preview-single").forEach(btn => {
     btn.addEventListener("click", e => {
       const i = e.currentTarget.dataset.index;
@@ -197,7 +196,7 @@ fileInput.addEventListener("change", () => {
   });
 });
 
-// 🔧 Basit durum etiketi
+// 🔧 Durum etiketi
 function showStatus(message, color = "#0f0") {
   let el = document.getElementById("uploadStatus");
   if (!el) {
@@ -240,13 +239,13 @@ form.addEventListener("submit", async (e) => {
     showStatus("📤 Yükleniyor...", "#ffd700");
 
     for (const file of files) {
-      // 🔹 Presigned URL al — email bazlı klasörleme aktif
-      const res = await fetch(`${API_BASE}/get-presigned`, {
+      // 🔹 Presigned URL al
+      const res = await fetch(`${API_BASE}/labratuvar-get-presigned`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
-          name: `uploads/${email}/${file.name}`,
-          type: file.type 
+          fileName: `${email}/${file.name}`,
+          contentType: file.type
         }),
       });
       const { uploadURL, key } = await res.json();
@@ -254,11 +253,18 @@ form.addEventListener("submit", async (e) => {
       // 🔹 Dosyayı yükle
       await fetch(uploadURL, { method: "PUT", body: file });
 
-      // 🔹 Form kaydını Lambda'ya gönder
+      // 🔹 Metadata gönder
       await fetch(`${API_BASE}/submit-form`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name, email, description, fileKey: key }),
+        body: JSON.stringify({
+          key,
+          extra: {
+            name,
+            email,
+            note: description
+          }
+        }),
       });
     }
 
@@ -278,7 +284,7 @@ form.addEventListener("submit", async (e) => {
   }
 });
 
-// 🧩 Tüm dosyaları sırayla önizleme
+// 🔍 Tüm dosyaları önizle
 previewBtn.addEventListener("click", () => {
   const files = fileInput.files;
   if (!files.length) {
@@ -293,4 +299,5 @@ previewBtn.addEventListener("click", () => {
   });
 });
 </script>
+
 
